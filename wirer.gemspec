@@ -1,0 +1,20 @@
+# -*- encoding: utf-8 -*-
+lib = File.expand_path('../lib/', __FILE__)
+$:.unshift lib unless $:.include?(lib)
+
+require 'wirer/version'
+
+spec = Gem::Specification.new do |s|
+  s.name   = "wirer"
+  s.version = Wirer::VERSION
+  s.platform = Gem::Platform::RUBY
+  s.authors = ['Matthew Willson']
+  s.email = ["matthew@playlouder.com"]
+  s.summary = "A lightweight dependency injection framework to help wire up objects in Ruby"
+
+  s.add_development_dependency('minitest', '~> 2.0.2')
+  s.add_development_dependency('mocha', '~> 0.9.12')
+  s.add_development_dependency('rcov', '~> 0.9.9')
+
+  s.files = Dir.glob("{lib}/**/*") + ['README.rb']
+end
