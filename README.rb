@@ -46,12 +46,58 @@ container = Wirer do |c|
 
   # however since two Loggers are available, we might want to specify
   # a particular one, by making it depend on the feature :special_logger
-  # provided by only one of them
+  # provided by only one of them.
   c.add :special_log_spewer, LogSpewer, :logger => :special_logger
 
   # You can specify a combination of class/module and feature name requirements for a
   # dependency:
   c.add :fussy_log_spewer, LogSpewer, :logger => [SpecialLogger, :providing, :these, :features]
+
+
+
+  # USING DEFAULTS and PREFERRED FEATURES TO CHOOSE FROM MANY AVAILABLE DEPENDENCIES
+
+  # If there are many Loggers available, and you have a dependency on a Logger, how does it
+  # decide which one to give you?
+  #
+  # Answer: It will never make an arbitrary choice for you. If there are multiple matching
+  # factories and it has no way to differentiate between them, it will raise an error complaining
+  # about it and let you fix the issue.
+  #
+  # You can either refine the dependency to a *particular* logger, as in the example above
+  # where we asked for a :special_logger.
+  #
+  # But it would also be nice if you could nominate one logger as the default to use in the
+  # case of multiple loggers, without having to specifically request it in each case:
+
+  c.add Logger, :default => true
+
+  # which is shorthand for:
+  c.add Logger, :features => [:default]
+
+
+  # this will then be chosen over any other options when resolving a dependency.
+  # (if more than one 'default' is available, it will still complain).
+
+  # Defaults are actually implemented under the hood using 'preferred features'.
+  # These are extra feature names in addition to the required features for a dependency,
+  # which you'd kinda like if possible but if not then no worries.
+  # eg:
+
+  c.add ColourfulLogSpewer, :logger => {:class => Logger, :prefer => :colour_capable_logger}
+
+  # If there are multiple matches for the logger dependency here, it will prefer one which
+  # provides the :colour_capable_logger feature.
+  # (if there are multiple :colour_capable_loggers, it will still complain).
+
+  # By default, dependencies come with a preferred feature of :default, as though they
+  # were constructed via:
+  c.add LogSpewer, :logger => {:class => Logger, :prefer => :default}
+
+  # You can even have multiple preferred_features, in which case it'll try to pick the
+  # dependency providing the greatest number of them. However if you need more advanced
+  # logic to choose the particular dependency you want
+
 
 
 

@@ -34,7 +34,13 @@ module Wirer
       options
     end
 
-    OPTION_NAMES = [:class, :module, :features, :multiple, :optional]
+    OPTION_NAMES = [:class, :module, :features, :prefer, :multiple, :optional]
+
+    # By default, dependencies will :prefer => :default.
+    # This means if you want to force one factory to be preferred over another
+    # in a given situation, you can just add (or wrap it with) a provided feature
+    # name of :default.
+    PREFER_DEFAULT = :default
 
     def initialize(options = {})
       required_class = options[:class] || options[:module]
@@ -48,12 +54,18 @@ module Wirer
       else
         raise ArgumentError, "required :class for a Dependency must be a Module or Class, or a String name of a Module or Class"
       end
-      @required_features = options[:features]
+      @required_features = options[:features] && [*options[:features]]
       @multiple = options[:multiple] || false
       @optional = options[:optional] || false
+
+      if @multiple
+        raise ArgumentError, "preferred features don't make sense for a :multiple depedency" if options.has_key?(:prefer)
+      else
+        @preferred_features = [*options.fetch(:prefer, PREFER_DEFAULT) || []]
+      end
     end
 
-    attr_reader :required_features
+    attr_reader :required_features, :preferred_features
     def multiple?; @multiple; end
     def optional?; @optional; end
 
@@ -77,20 +89,34 @@ module Wirer
     end
 
     def inspect
-      description = [requirements_to_s, ("optional" if @optional), ("multiple" if @multiple)].compact.join(', ')
+      description = [
+        requirements_to_s,
+        ("optional" if @optional),
+        ("multiple" if @multiple),
+        ("preferring features #{@preferred_features.inspect}" if @preferred_features && !@preferred_features.empty?)
+      ].compact.join(', ')
       "#<#{self.class} on #{description}>"
     end
 
     def match_factories(available_factories)
       candidates = available_factories.select {|f| self === f}
-      if !@multiple && candidates.length > 1
-        raise DependencyFindingError, "More than one factory available matching #{requirements_to_s}"
-      end
       if !@optional && candidates.length == 0
         raise DependencyFindingError, "No available factories matching #{requirements_to_s}"
       end
-      candidates.map! {|c| yield c} if block_given?
-      @multiple ? candidates : candidates.first
+      if @multiple
+        candidates.map! {|c| yield c} if block_given?; candidates
+      else
+        candidate = if candidates.length > 1
+          if @preferred_features.empty?
+            raise DependencyFindingError, "More than one factory available matching #{requirements_to_s}"
+          else
+            unique_preferred_factory(candidates)
+          end
+        else
+          candidates.first
+        end
+        block_given? ? yield(candidate) : candidate
+      end
     end
 
     def ===(factory)
@@ -104,7 +130,8 @@ module Wirer
         :multiple => @multiple,
         :optional => @optional,
         :class    => required_class,
-        :features => @required_features
+        :features => @required_features,
+        :prefer   => @preferred_features
       }
       new_required_class = options[:class] and begin
         if required_class && !(new_required_class <= required_class)
@@ -113,9 +140,36 @@ module Wirer
         new_options[:class] = new_required_class
       end
       new_required_features = options[:features] and begin
-        new_options[:features] |= new_required_features
+        new_options[:features] ||= []
+        new_options[:features] |= [*new_required_features]
+      end
+      new_preferred_features = options[:prefer] and begin
+        new_options[:prefer] ||= []
+        new_options[:prefer] |= [*new_preferred_features]
       end
       self.class.new(new_options)
+    end
+
+  private
+
+    def unique_preferred_factory(candidates)
+      max_preferred_features_count = 0
+      winners = []
+      candidates.each do |candidate|
+        provided = candidate.provides_features
+        count = @preferred_features.count {|f| provided.include?(f)}
+        if count > max_preferred_features_count
+          max_preferred_features_count = count
+          winners = [candidate]
+        elsif count == max_preferred_features_count
+          winners << candidate
+        end
+      end
+      if winners.length > 1
+        raise DependencyFindingError,
+          "More than one factory available matching #{requirements_to_s}, and tie can't be resolved using preferred_features #{@preferred_features.inspect}"
+      end
+      winners.first
     end
   end
 end

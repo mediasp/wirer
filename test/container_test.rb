@@ -335,4 +335,106 @@ describe Wirer::Container do
     assert result.post_initialized
     assert result.bar.post_initialized
   end
+
+  describe :add do
+    before do
+      @container = Wirer::Container.new
+    end
+
+    it "should accept a single factory instance, passing it to add_factory_instance" do
+      factory = stub_factory
+      @container.expects(:add_factory_instance).with(factory, anything)
+      @container.add(factory)
+    end
+
+    it "should accept a single Class, adding a Factory::FromArgs with this as its provided_class" do
+      klass = Class.new
+      @container.add(klass)
+      assert_equal klass, @container.factories.first.provides_class
+    end
+
+    it "should accept a single Class, adding a Factory::FromArgs with this as its provided_class" do
+      klass = Class.new
+      @container.add(klass)
+      assert_equal klass, @container.factories.first.provides_class
+      assert_instance_of klass, @container[klass]
+    end
+
+    it "should accept a single Module together with a constructor block, adding a Factory::FromArgs with this as its provided_class" do
+      mod = Module.new
+      @container.add(mod) {o = Object.new; o.extend(mod); o}
+      assert_equal mod, @container.factories.first.provides_class
+      assert_kind_of mod, @container[mod]
+    end
+
+    it "should accept a Class together with some non-Hash initial arguments" do
+      klass = Struct.new(:a, :b, :c)
+      @container.add klass, 'a', 123, [456]
+      result = @container[klass]
+      assert_equal ['a', 123, [456]], [result.a, result.b, result.c]
+    end
+
+    it "should accept :default => true as shorthand for :features => [:default] (which is preferred by default by dependencies)" do
+      klass = Struct.new(:x)
+      @container.add(klass, :default => true) {klass.new(1)}
+      @container.add(klass) {klass.new(2)}
+      assert_equal klass, @container.factories.first.provides_class
+      assert_equal klass, @container.factories.first.provides_class
+      assert_equal 1, @container[klass].x
+    end
+
+    it "should accept a non-class/module, non-hash object and add it wrapped as a Factory::FromInstance" do
+      klass = Class.new; o = klass.new
+      @container.add(o)
+      assert_instance_of Wirer::Factory::FromInstance, @container.factories.first
+      assert_same o, @container[klass]
+    end
+
+    it "should accept a factory instance together with some args for Factory::Wrapped, and add the wrapped factory" do
+      factory = stub_factory
+      @container.add factory, :features => [:foo, :bar, :baz]
+      assert_instance_of Wirer::Factory::Wrapped, @container.factories.first
+      assert_equal [:foo, :bar, :baz], @container.factories.first.provides_features
+    end
+
+    it "should make sure to treat as a Factory when adding a Class which is also a Wirer::Factory::Interface" do
+      class_factory = Class.new {extend Wirer::Factory::Interface} # or ClassDSL which includes this
+      @container.add class_factory, :features => [:some, :factory, :wrapping, :args]
+      assert_instance_of Wirer::Factory::Wrapped, @container.factories.first
+    end
+
+    it "should accept an initial symbol name, which is used as the :method_name and added as a provided feature to the factory that gets added" do
+      klass = Class.new
+      @container.add :foo, klass
+      assert_instance_of klass, @container.foo
+      assert_instance_of klass, @container[:foo]
+
+      o = Object.new
+      @container.add(:bar) {o}
+      assert_equal o, @container.bar
+      assert_equal o, @container[:bar]
+
+      factory = stub_factory
+      @container.add :foo, factory
+      assert_equal [:foo], @container.factory(:foo).provides_features
+    end
+
+    it "should accept a Hash of dependencies by arg name when adding a Class (provided there is no overlap with the other option names used by add)" do
+      klass = Class.new; dep_class = Class.new
+      @container.add :foo, klass, :example_dep => dep_class
+      factory = @container.factory(:foo)
+      assert factory.constructor_dependencies.has_key?(:example_dep)
+      assert_equal dep_class, factory.constructor_dependencies[:example_dep].required_class
+    end
+
+    it "should accept a Hash of dependency refinements by arg name when adding an existing Factory (provided there is no overlap with the other option names used by add)" do
+      dep_class = Class.new
+      factory = Wirer::Factory::FromArgs.new(:dependencies => {:example_dep => Object}) { Object.new }
+
+      @container.add :foo, factory, :example_dep => :extra_required_feature
+
+      factory = @container.factory(:foo)
+      assert_equal [:extra_required_feature], factory.constructor_dependencies[:example_dep].required_features
+    end
+  end
 end

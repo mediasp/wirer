@@ -64,20 +64,70 @@ describe Wirer::Dependency do
   describe :match_factories do
     describe "default cardinality (:optional => false, :multiple => false)" do
       it "should return a single factory instance" do
-        dependency = Wirer::Dependency.new(:features => [:foo])
+        dependency = Wirer::Dependency.new(:features => [:foo], :prefer => nil)
         matching = stub_factory(:provides_features => [:foo])
         assert_same matching, dependency.match_factories([matching])
       end
 
-      it "should complain unless one and only one matching factory is available" do
-        dependency = Wirer::Dependency.new(:features => [:foo])
-        matching1 = stub_factory(:provides_features => [:foo])
-        matching2 = stub_factory(:provides_features => [:foo])
-        assert_raises(Wirer::DependencyFindingError) do
-          dependency.match_factories([matching1, matching2])
+      describe "where more than one factory is available matching the requirements" do
+        describe "where there are no preferred_features" do
+          it "should complain" do
+            dependency = Wirer::Dependency.new(:features => [:foo])
+            matching1 = stub_factory(:provides_features => [:foo])
+            matching2 = stub_factory(:provides_features => [:foo])
+            assert_raises(Wirer::DependencyFindingError) do
+              dependency.match_factories([matching1, matching2])
+            end
+            assert_raises(Wirer::DependencyFindingError) do
+              dependency.match_factories([])
+            end
+          end
         end
-        assert_raises(Wirer::DependencyFindingError) do
-          dependency.match_factories([])
+
+        describe "where preferred_features are specified" do
+          it "should return the winner of a tiebreak round, where there's a unique winner which provides more preferred_features than any other" do
+            dependency = Wirer::Dependency.new(:features => [:foo], :prefer => [:bar, :baz])
+            matching1 = stub_factory(:provides_features => [:foo, :bar])
+            matching2 = stub_factory(:provides_features => [:foo, :baz])
+            matching3 = stub_factory(:provides_features => [:foo, :bar, :baz])
+            assert_equal matching3, dependency.match_factories([matching1, matching2, matching3])
+          end
+
+          it "should complain when two factories come equal-first in this tiebreak round" do
+            dependency = Wirer::Dependency.new(:features => [:foo], :prefer => [:bar, :baz])
+            matching1 = stub_factory(:provides_features => [:foo, :bar])
+            matching2 = stub_factory(:provides_features => [:foo, :baz])
+            assert_raises(Wirer::DependencyFindingError) do
+              dependency.match_factories([matching1, matching2])
+            end
+
+            dependency = Wirer::Dependency.new(:features => [:foo], :prefer => :bar)
+            matching1 = stub_factory(:provides_features => [:foo, :bar])
+            matching2 = stub_factory(:provides_features => [:foo, :bar])
+            assert_raises(Wirer::DependencyFindingError) do
+              dependency.match_factories([matching1, matching2])
+            end
+          end
+        end
+
+        describe "with the default value for preferred_features (ie [:default])" do
+          it "should in the event of a tiebreak, prefer a factory which provides_feature :default" do
+            dependency = Wirer::Dependency.new(:features => [:foo])
+            matching1 = stub_factory(:provides_features => [:foo])
+            matching2 = stub_factory(:provides_features => [:foo, :default])
+            assert_equal matching2, dependency.match_factories([matching1, matching2])
+          end
+        end
+
+        describe "with the default preferred_features of :default explicitly turned off" do
+          it "should complain rather than preferring a default" do
+            dependency = Wirer::Dependency.new(:features => [:foo], :prefer => nil)
+            matching1 = stub_factory(:provides_features => [:foo])
+            matching2 = stub_factory(:provides_features => [:foo, :default])
+            assert_raises(Wirer::DependencyFindingError) do
+              dependency.match_factories([matching1, matching2])
+            end
+          end
         end
       end
     end

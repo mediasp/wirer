@@ -41,6 +41,8 @@ module Wirer
     def add(*add_args, &add_block_arg)
       add_options = if add_args.last.is_a?(Hash) then add_args.pop else {} end
 
+      (add_options[:features] ||= []) << :default if add_options.delete(:default)
+
       unless add_options.empty? || ADD_OPTION_NAMES.any? {|o| add_options.include?(o)}
         add_options = {:dependencies => add_options}
       end
