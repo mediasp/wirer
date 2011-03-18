@@ -436,5 +436,20 @@ describe Wirer::Container do
       factory = @container.factory(:foo)
       assert_equal [:extra_required_feature], factory.constructor_dependencies[:example_dep].required_features
     end
+
+    it "should accept a more verbose form with keyed arguments for initial arguments, dependencies etc when this is desired or necessary" do
+      klass = Struct.new(:a, :b, :deps); dep_class = Class.new
+      @container.add(:foo,
+        :class               => klass,
+        :args                => [1,2],
+        :dependencies        => {:foo => dep_class},
+        :setter_dependencies => {:bar => dep_class}
+      )
+      @container.add(dep_class)
+      factory = @container.factory(:foo)
+      assert_equal klass, factory.provides_class
+      assert factory.constructor_dependencies.has_key?(:foo)
+      assert factory.setter_dependencies.has_key?(:bar)
+    end
   end
 end
