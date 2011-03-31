@@ -81,7 +81,11 @@ module Wirer
         else
           other_args.push(dependencies) unless dependencies.empty?
         end
-        other_args.unshift(*@initial_args) if @initial_args
+        case @initial_args
+        when NilClass # forgeddit
+        when Array then other_args.unshift(*@initial_args)
+        else other_args.unshift(@initial_args)
+        end
         @provides_class.new(*other_args, &block_arg)
       end
     end

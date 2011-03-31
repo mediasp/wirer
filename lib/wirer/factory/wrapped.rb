@@ -72,9 +72,13 @@ module Wirer
 
     def new_from_dependencies(dependencies, *other_args, &block_arg)
       if @wrapped_constructor_block
-        @wrapped_constructor_block.call(@wrapped_factory, dependencies, *other_args, &block_arg)
+        @wrapped_constructor_block.call(dependencies, *other_args, &block_arg)
       else
-        other_args.unshift(*@initial_args) if @initial_args
+        case @initial_args
+        when NilClass # forgeddit
+        when Array then other_args.unshift(*@initial_args)
+        else other_args.unshift(@initial_args)
+        end
         @wrapped_factory.new_from_dependencies(dependencies, *other_args, &block_arg)
       end
     end
