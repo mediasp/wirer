@@ -80,9 +80,13 @@ module Wirer
 
     def requirements_to_s
       [
-        case required_class
-        when ::Class then "class #{@required_class}"
-        when ::Module then "module #{@required_class}"
+        begin
+          case required_class
+          when ::Class then "class #{@required_class}"
+          when ::Module then "module #{@required_class}"
+          end
+        rescue NameError
+          "class or module name #{@required_class_name} (not currently loaded!)"
         end,
         @required_features && "features #{@required_features.inspect}"
       ].compact.join(" and ")
@@ -120,9 +124,20 @@ module Wirer
     end
 
     def ===(factory)
-      factory.is_a?(Factory::Interface) &&
-      (!required_class    || factory.provides_class <= required_class) &&
-      (!@required_features || @required_features.all? {|feature| factory.provides_features.include?(feature)})
+      factory.is_a?(Factory::Interface) && matches_required_class(factory) && matches_required_features(factory)
+    end
+
+    # if the required_class can't be resolved (ie a class of that name doesn't even exist) then nothing will match.
+    def matches_required_class(factory)
+      begin
+        !required_class || factory.provides_class <= required_class
+      rescue NameError
+        false
+      end
+    end
+
+    def matches_required_features(factory)
+      !@required_features || @required_features.all? {|feature| factory.provides_features.include?(feature)}
     end
 
     def with_options(options)

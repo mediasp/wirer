@@ -36,6 +36,24 @@ describe Wirer::Dependency do
         refute_operator(dependency, :===, stub_factory(:provides_class => Object))
         refute_operator(dependency, :===, stub_factory(:provides_class => @other_class))
       end
+
+      describe "with :class specified as a string class constant name" do
+        it "should match factories which provide_class this class or a subclass thereof, resolving the class constant name lazily on first usage" do
+          dependency = Wirer::Dependency.new(:class => "Wirer::TestClass")
+          @klass = Class.new
+          Wirer.const_set('TestClass', @klass)
+          begin
+            @subclass = Class.new(Wirer::TestClass)
+            @other_class = Class.new
+            assert_operator(dependency, :===, stub_factory(:provides_class => @klass))
+            assert_operator(dependency, :===, stub_factory(:provides_class => @subclass))
+            refute_operator(dependency, :===, stub_factory(:provides_class => Object))
+            refute_operator(dependency, :===, stub_factory(:provides_class => @other_class))
+          ensure
+            Wirer.send(:remove_const, 'TestClass')
+          end
+        end
+      end
     end
 
     describe "with :features specified" do
@@ -177,6 +195,26 @@ describe Wirer::Dependency do
         assert_equal [], dependency.match_factories([not_matching])
       end
     end
+
+    describe "with a string constant name :class dependency and :optional => false" do
+      it "should complain if it can't resolve the constant name" do
+        dependency = Wirer::Dependency.new(:class => "Non::Existent")
+        begin
+          dependency.match_factories([])
+          flunk "expected Wirer::DependencyFindingError"
+        rescue Wirer::DependencyFindingError => e
+          assert_match /Non::Existent/, e.message
+        end
+      end
+    end
+
+    describe "with a string constant name :class dependency and :optional => true" do
+      it "should not complain if it can't resolve the constant name, just don't supply the (optional!) dependency" do
+        dependency = Wirer::Dependency.new(:class => "Non::Existent", :optional => true)
+        assert_nil dependency.match_factories([])
+      end
+    end
+
   end
 
 end
