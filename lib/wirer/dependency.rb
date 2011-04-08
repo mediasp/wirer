@@ -119,7 +119,11 @@ module Wirer
         else
           candidates.first
         end
-        block_given? ? yield(candidate) : candidate
+        if block_given?
+          yield candidate if candidate
+        else
+          candidate
+        end
       end
     end
 
