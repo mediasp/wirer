@@ -295,7 +295,7 @@ describe Wirer::Container do
       assert_instance_of @bar_klass, result.bar
     end
 
-    it "should allow cyclic dependencies to be achieved" do
+    it "should allow cyclic dependencies to be achieved, provided one of the dependencies is a setter_dependency" do
       @container = Wirer::Container.new do |c|
         c.add_new_factory(:class => @foo_klass, :setter_dependencies => {:bar => @bar_klass}, :method_name => :foo)
         c.add_new_factory(:class => @bar_klass, :dependencies => {:foo => @foo_klass})
@@ -303,6 +303,16 @@ describe Wirer::Container do
       result = @container.foo
       assert_instance_of @bar_klass, result.bar
       assert_same result.bar.foo, result
+    end
+
+    it "should allow cyclic dependencies to be achieved, no matter which order you ask for things in" do
+      @container = Wirer::Container.new do |c|
+        c.add_new_factory(:class => @foo_klass, :setter_dependencies => {:bar => @bar_klass}, :method_name => :foo)
+        c.add_new_factory(:class => @bar_klass, :dependencies => {:foo => @foo_klass}, :method_name => :bar)
+      end
+      result = @container.bar
+      assert_instance_of @foo_klass, result.foo
+      assert_same result.foo.bar, result
     end
   end
 

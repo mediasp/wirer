@@ -151,13 +151,23 @@ module Wirer
     def construction_session
       @construction_mutex.synchronize do
         begin
-          @construction_phase_in_progress = {}
-          @constructed_this_session = []
-          yield
+          @phase_1_in_progress = []
+          @queued_for_phase_2 = []
+          @queued_for_post_initialize = []
+
+          result = yield
+
+          until @queued_for_phase_2.empty?
+            factory_instance = @queued_for_phase_2.pop
+            construct_and_inject_setter_dependencies(*factory_instance)
+            @queued_for_post_initialize.push(factory_instance)
+          end
+
+          result
         ensure
-          post_initialize(@constructed_this_session)
-          remove_instance_variable(:@construction_phase_in_progress)
-          remove_instance_variable(:@constructed_this_session)
+          post_initialize(@queued_for_post_initialize)
+          remove_instance_variable(:@phase_1_in_progress)
+          remove_instance_variable(:@queued_for_post_initialize)
         end
       end
     end
@@ -185,29 +195,25 @@ module Wirer
     def construct_factory_without_args(factory)
       instance = @singleton_factories_instances[factory] and return instance
 
-      if @construction_phase_in_progress[factory]
-        raise CyclicDependencyError, "Cyclic constructor dependencies. Break the cycle by changing some into setter dependencies."
+      if @phase_1_in_progress.include?(factory)
+        cycle = @phase_1_in_progress[@phase_1_in_progress.index(factory)..-1] + [factory]
+        raise CyclicDependencyError, "Cyclic constructor dependencies. Break the cycle by changing some into setter dependencies:\n#{cycle.map(&:inspect).join("\n")}"
       end
-      @construction_phase_in_progress[factory] = true
-
+      @phase_1_in_progress.push(factory)
       result = construct_with_constructor_dependencies(factory)
-
-      @construction_phase_in_progress.delete(factory)
+      @phase_1_in_progress.pop
 
       if @singleton_factories_instances.has_key?(factory)
         @singleton_factories_instances[factory] = result
       end
 
-      construct_and_inject_setter_dependencies(factory, result)
-      @constructed_this_session << [factory, result]
-
+      @queued_for_phase_2.push([factory, result])
       result
     end
 
     def construct_factory_with_args(factory, *args, &block_arg)
       result = construct_with_constructor_dependencies(factory, *args, &block_arg)
-      construct_and_inject_setter_dependencies(factory, result)
-      @constructed_this_session << [factory, result]
+      @queued_for_phase_2.push([factory, result])
       result
     end
 
