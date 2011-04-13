@@ -131,6 +131,23 @@ module Wirer
       factory.is_a?(Factory::Interface) && matches_required_class(factory) && matches_required_features(factory)
     end
 
+    def type_check_argument(argument_name, argument)
+      if @multiple
+        raise ArgumentError, "expected Array for argument #{argument_name}" unless argument.is_a?(Array)
+        raise ArgumentError, "expected at least one value for argument #{argument_name}" if argument.empty? && !@optional
+        argument.each do |value|
+          if required_class && !value.is_a?(required_class)
+            raise ArgumentError, "expected Array of #{required_class} for argument #{argument_name}"
+          end
+        end
+      else
+        raise ArgumentError, "expected argument #{argument_name}" if argument.nil? && !@optional
+        if required_class && !argument.is_a?(required_class)
+          raise ArgumentError, "expected #{required_class} for argument #{argument_name}"
+        end
+      end
+    end
+
     # if the required_class can't be resolved (ie a class of that name doesn't even exist) then nothing will match.
     def matches_required_class(factory)
       begin

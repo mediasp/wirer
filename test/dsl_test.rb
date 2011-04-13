@@ -32,11 +32,12 @@ describe Wirer::Factory::ClassDSL do
   end
 
   describe "setter_dependency" do
-    it "should by default, define a private setter for use when injecting that dependency" do
+    it "should by default, define a private getter and setter for use when injecting that dependency" do
       klass = Class.new do
         wireable
         setter_dependency :bar, :bar_feature
       end
+      assert klass.private_method_defined?(:bar)
       assert klass.private_method_defined?(:bar=)
     end
 
@@ -56,24 +57,48 @@ describe Wirer::Factory::ClassDSL do
       assert klass.public_method_defined?(:bar=)
     end
 
-    it "should also define a public getter if :accessor => true specified" do
+    it "should not define a getter if you specify :getter => false" do
       klass = Class.new do
         wireable
-        setter_dependency :bar, :bar_feature, :accessor => true
+        setter_dependency :bar, :bar_feature, :getter => false
+      end
+      assert !klass.method_defined?(:bar)
+    end
+
+    it "should make the getter public if :getter => :public specified" do
+      klass = Class.new do
+        wireable
+        setter_dependency :bar, :bar_feature, :getter => :public
       end
       assert klass.public_method_defined?(:bar)
-      assert klass.private_method_defined?(:bar=)
     end
   end
 
   describe "dependency" do
-    it "should add a public attr_reader of the same name if :getter => true specified" do
+    it "should add a private attr_reader of the same name by default" do
       klass = Class.new do
         wireable
-        dependency :bar, :bar_feature, :getter => true
+        dependency :bar, :bar_feature
+      end
+      assert klass.private_method_defined?(:bar)
+    end
+
+    it "should not add an attr_reader if :getter => false" do
+      klass = Class.new do
+        wireable
+        dependency :bar, :bar_feature, :getter => false
+      end
+      assert !klass.method_defined?(:bar)
+    end
+
+    it "should make the getter public if :getter => :public" do
+      klass = Class.new do
+        wireable
+        dependency :bar, :bar_feature, :getter => :public
       end
       assert klass.public_method_defined?(:bar)
     end
+
   end
 
   it "should allow provides_features to be declared within the class definition" do

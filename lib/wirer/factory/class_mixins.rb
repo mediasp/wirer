@@ -64,12 +64,14 @@ module Wirer
       deps_hash[arg_name] = Dependency.new_from_args(*dependency_args)
     end
 
-    # as a convenience, will additionally define a public attr_reader for this dependency name if
-    # :getter => true if passed
+    # as a convenience, will additionally define an attr_reader for this dependency name
+    # unless you specify :getter => false. by default it will be private, but :getter => :public
+    # will make it public.
     def constructor_dependency(name, *args)
-      if args.last.is_a?(Hash) && args.last.delete(:getter)
+      getter = if args.last.is_a?(Hash) then args.last.delete(:getter) end
+      if getter != false
         attr_reader(name)
-        public(name)
+        getter == :public ? public(name) : private(name)
       end
       add_dependency(:constructor, name, *args)
     end
@@ -81,15 +83,15 @@ module Wirer
     # and a corresponding public attr_reader too if :accessor => true if specified.
     def setter_dependency(name, *args)
       options = args.last.is_a?(Hash) ? args.last : {}
-      accessor = options.delete(:accessor)
+      getter = options.delete(:getter)
       setter = options.delete(:setter)
-      if (setter != false) || accessor
+      if setter != false
         attr_writer(name)
         setter == :public ? public(:"#{name}=") : private(:"#{name}=")
       end
-      if accessor
+      if getter != false
         attr_reader(name)
-        public(name)
+        getter == :public ? public(name) : private(name)
       end
 
       add_dependency(:setter, name, *args)

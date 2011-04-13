@@ -216,5 +216,4 @@ describe Wirer::Dependency do
     end
 
   end
-
 end
