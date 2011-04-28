@@ -141,6 +141,28 @@ module Wirer
       end
     end
 
+    # Injects (ie monkey-patches) constructor methods into a given object,
+    # which delegate to the corresponding constructor methods defined on the
+    # container.
+    #
+    # This is primarily for use as a convenience by the top-level code which is
+    # driving an application, to inject application services from a container
+    # into the context of (say) an integration test or a driver script.
+    #
+    # If you're considering using this to supply dependencies to objects
+    # *within* your application: instead you would usually want to add that object to
+    # the container with dependencies specified, and let the container construct
+    # it with the right dependencies. Google for discussion about 'service locator'
+    # pattern vs 'dependency injection' / 'IoC container' pattern for more on this.
+    def inject_methods_into(instance, *names)
+      _self = self
+      names.each do |name|
+        class << instance; self; end.send(:define_method, name) do |*args|
+          _self.construct_factory_by_method_name(name, *args)
+        end
+      end
+    end
+
   private
 
     # N.B. all calls to the private construct_ methods below must be wrapped with

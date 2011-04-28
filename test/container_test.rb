@@ -125,6 +125,19 @@ describe Wirer::Container do
     end
   end
 
+  describe :inject_methods_for do
+    it "should monkey-patch methods onto an object, which delegate to factory constructor methods defined on the container" do
+      @container = Wirer::Container.new do |c|
+        c.add_new_factory(:method_name => :test1) {1}
+        c.add_new_factory(:method_name => :test2) {2}
+      end
+      context = Object.new
+      @container.inject_methods_into(context, :test1, :test2)
+      assert_equal 1, context.test1
+      assert_equal 2, context.test2
+    end
+  end
+
   describe :add_new_factory do
     it "should construct and add a Factory::FromArgs with the given arguments, passing on :method_name when adding the factory" do
       @klass = Class.new; @instance = @klass.new
