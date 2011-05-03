@@ -203,7 +203,16 @@ module Wirer
     end
 
     def construct_dependency(dependency)
-      dependency.match_factories(@factories) {|factory| construct_factory_without_args(factory)}
+      dependency.match_factories(@factories) do |factory|
+        if dependency.factory?
+          if @singleton_factories_instances.has_key?(factory)
+            raise Error, "Problem with :factory => true dependency: #{factory} was added to the container as a singleton, so only a singleton instance can be supplied, not a wrapped factory"
+          end
+          curry_factory_with_constructed_dependencies(factory)
+        else
+          construct_factory_without_args(factory)
+        end
+      end
     end
 
     def construct_factory(factory, *args, &block_arg)
@@ -242,6 +251,11 @@ module Wirer
     def construct_with_constructor_dependencies(factory, *args, &block_arg)
       deps = construct_dependencies(factory.constructor_dependencies)
       factory.new_from_dependencies(deps, *args, &block_arg)
+    end
+
+    def curry_factory_with_constructed_dependencies(factory)
+      deps = construct_dependencies(factory.constructor_dependencies)
+      factory.curry_with_dependencies(deps)
     end
 
     def construct_and_inject_setter_dependencies(factory, instance)

@@ -91,6 +91,13 @@ module Wirer
       raise NotImplementedError
     end
 
+    # Supplies a wrapper around the factory with a set of pre-supplied dependencies.
+    # The wrapper can then be used to construct instances.
+    # See Factory::CurriedDependencies
+    def curry_with_dependencies(dependencies)
+      Factory::CurriedDependencies.new(self, dependencies)
+    end
+
     def inject_dependency(instance, attr_name, dependency)
       instance.send(:"#{attr_name}=", dependency)
     end

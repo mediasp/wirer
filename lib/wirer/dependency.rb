@@ -34,7 +34,7 @@ module Wirer
       options
     end
 
-    OPTION_NAMES = [:class, :module, :features, :prefer, :multiple, :optional]
+    OPTION_NAMES = [:class, :module, :features, :prefer, :multiple, :optional, :factory]
 
     # By default, dependencies will :prefer => :default.
     # This means if you want to force one factory to be preferred over another
@@ -57,6 +57,7 @@ module Wirer
       @required_features = options[:features] && [*options[:features]]
       @multiple = options[:multiple] || false
       @optional = options[:optional] || false
+      @factory = options[:factory] || false
 
       if @multiple
         raise ArgumentError, "preferred features don't make sense for a :multiple depedency" if options.has_key?(:prefer)
@@ -68,6 +69,12 @@ module Wirer
     attr_reader :required_features, :preferred_features
     def multiple?; @multiple; end
     def optional?; @optional; end
+
+    # Specifying :factory => true on a dependency means that you won't be given an actual instance
+    # of the class you asked for, but rather you'll be given a simple factory wrapper which allows
+    # you to construct your own instance(s), with any dependencies pre-supplied.
+    # See Factory::CurriedDependencies
+    def factory?; @factory; end
 
     # A string class name may be supplied as the :class arg to the constructor, in which case we only
     # attempt to resolve the actual class from it the first time .required_class is requested.
@@ -94,7 +101,7 @@ module Wirer
 
     def inspect
       description = [
-        requirements_to_s,
+        @factory ? "factory for #{requirements_to_s}" : requirements_to_s,
         ("optional" if @optional),
         ("multiple" if @multiple),
         ("preferring features #{@preferred_features.inspect}" if @preferred_features && !@preferred_features.empty?)

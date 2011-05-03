@@ -475,4 +475,52 @@ describe Wirer::Container do
       assert factory.setter_dependencies.has_key?(:bar)
     end
   end
+
+  describe "with dependencies marked :factory => true" do
+    class Foo
+      def initialize(arg, deps); @deps = deps; @arg = arg; end
+      attr_reader :deps, :arg
+    end
+    class Baz; end
+
+    describe "when the dependency can be met by non-singleton factory" do
+      # the main use case:
+      # when you have a factory which takes extra arguments beyond just its dependencies, and you want to get it injected as a dependency with its own dependencies pre-supplied.
+      it "should, instead of supplying a constructed instance for these dependencies, supply a factory-like object responding to :new or :call, which comes with its own constructor dependencies pre-supplied but allows the receiver to construct their own instance(s) as desired" do
+        container = Wirer::Container.new do |c|
+          c.add_new_factory(:class => Baz)
+          c.add_new_factory(:class => Foo, :dependencies => {:baz => Baz}, :singleton => false)
+          c.add_new_factory(:method_name => :bar, :dependencies => {:foo_factory => {:class => Foo, :factory => true}}) {|deps| deps}
+        end
+
+        bar = container.bar
+        foo1, foo2 = bar[:foo_factory].new(123), bar[:foo_factory].call(456)
+
+        assert_instance_of Foo, foo1
+        assert_instance_of Foo, foo2
+        refute_same foo1, foo2
+
+        assert_instance_of Baz, foo1.deps[:baz]
+        assert_instance_of Baz, foo2.deps[:baz]
+
+        assert_equal 123, foo1.arg
+        assert_equal 456, foo2.arg
+      end
+    end
+
+    describe "when the dependency is met by a factory which was added to the container as a singleton (the default behaviour)" do
+      it "should refuse to supply it as a factory dependency, since this would allow it to be called multiple times to construct multiple instances" do
+        # TODO: we could enforce the container-local singleton behaviour inside the curried wrapper object we return;
+        # but this is fiddly and not yet run into a use case for it
+        container = Wirer::Container.new do |c|
+          c.add_new_factory(:class => Foo, :features => [:foo]) {Object.new}
+          c.add_new_factory(:method_name => :bar, :dependencies => {:foo => {:class => Foo, :factory => true}}) {|deps| shouldnt_get_here}
+        end
+        assert_raises(Wirer::Error) do
+          container.bar
+        end
+      end
+
+    end
+  end
 end
