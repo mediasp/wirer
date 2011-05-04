@@ -143,13 +143,21 @@ module Wirer
         raise ArgumentError, "expected Array for argument #{argument_name}" unless argument.is_a?(Array)
         raise ArgumentError, "expected at least one value for argument #{argument_name}" if argument.empty? && !@optional
         argument.each do |value|
-          if required_class && !value.is_a?(required_class)
+          if @factory
+            unless value.respond_to?(:new)
+              raise ArgumentError, "expected Array of factory-like objects which respond_to?(:new) for argument #{argument_name}"
+            end
+          elsif required_class && !value.is_a?(required_class)
             raise ArgumentError, "expected Array of #{required_class} for argument #{argument_name}"
           end
         end
       else
         raise ArgumentError, "expected argument #{argument_name}" if argument.nil? && !@optional
-        if required_class && !argument.is_a?(required_class)
+        if @factory
+          unless argument.respond_to?(:new)
+            raise ArgumentError, "expected factory-like object which respond_to?(:new) for argument #{argument_name}"
+          end
+        elsif required_class && !argument.is_a?(required_class)
           raise ArgumentError, "expected #{required_class} for argument #{argument_name}"
         end
       end

@@ -522,5 +522,11 @@ describe Wirer::Container do
       end
 
     end
+
+    it "Dependency#type_check_argument should accept a factory-like object responding to new" do
+      dep = Wirer::Dependency.new_from_args(:class => Foo, :factory => true)
+      dep.type_check_argument(:foo, stub(:new => Object.new))
+      assert true
+    end
   end
 end
