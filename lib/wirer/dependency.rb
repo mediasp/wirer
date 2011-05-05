@@ -138,7 +138,7 @@ module Wirer
       factory.is_a?(Factory::Interface) && matches_required_class(factory) && matches_required_features(factory)
     end
 
-    def type_check_argument(argument_name, argument)
+    def check_argument(argument_name, argument, strict_type_checks=false)
       if @multiple
         raise ArgumentError, "expected Array for argument #{argument_name}" unless argument.is_a?(Array)
         raise ArgumentError, "expected at least one value for argument #{argument_name}" if argument.empty? && !@optional
@@ -147,7 +147,7 @@ module Wirer
             unless value.respond_to?(:new)
               raise ArgumentError, "expected Array of factory-like objects which respond_to?(:new) for argument #{argument_name}"
             end
-          elsif required_class && !value.is_a?(required_class)
+          elsif strict_type_checks && required_class && !value.is_a?(required_class)
             raise ArgumentError, "expected Array of #{required_class} for argument #{argument_name}"
           end
         end
@@ -157,7 +157,7 @@ module Wirer
           unless argument.respond_to?(:new)
             raise ArgumentError, "expected factory-like object which respond_to?(:new) for argument #{argument_name}"
           end
-        elsif required_class && !argument.is_a?(required_class)
+        elsif strict_type_checks && required_class && !argument.is_a?(required_class)
           raise ArgumentError, "expected #{required_class} for argument #{argument_name}"
         end
       end

@@ -18,7 +18,7 @@ describe Wirer::Service do
     assert_equal 123, instance.bar
   end
 
-  it "should type-check its constructor dependency arguments, using constructor_dependencies" do
+  it "should type-check constructor dependency arguments to 'new', using constructor_dependencies" do
     klass = Class.new(Wirer::Service) do
       dependency :foo, String
       dependency :bar, Integer, :multiple => true
@@ -38,4 +38,23 @@ describe Wirer::Service do
     assert klass.new(:foo => "right", :bar => [123, 456], :baz => Object.new)
   end
 
+  it "when using new_skipping_type_checks, should skip checks on the types of *supplied* constructor dependencies, but still complain about missing ones" do
+    klass = Class.new(Wirer::Service) do
+      dependency :foo, String
+      dependency :bar, Integer, :multiple => true
+      dependency :baz, :optional => true
+    end
+
+    # still complains if arguments are missing
+    assert_raises(ArgumentError) {klass.new_skipping_type_checks}
+    assert_raises(ArgumentError) {klass.new_skipping_type_checks(:foo => :wrong)}
+    assert_raises(ArgumentError) {klass.new_skipping_type_checks(:bar => [123, 456])}
+
+    # but not if they're present but of the wrong type. useful for passing mocks in a
+    # unit test.
+    assert klass.new_skipping_type_checks(:foo => "right", :bar => [:wrong])
+    assert klass.new_skipping_type_checks(:foo => "right", :bar => [123, :wrong])
+    assert klass.new_skipping_type_checks(:foo => "right", :bar => [123, 456])
+    assert klass.new_skipping_type_checks(:foo => "right", :bar => [123, 456], :baz => Object.new)
+  end
 end

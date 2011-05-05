@@ -476,7 +476,7 @@ describe Wirer::Container do
     end
   end
 
-  describe "with dependencies marked :factory => true" do
+  describe "with dependencies that are :factory => true" do
     class Foo
       def initialize(arg, deps); @deps = deps; @arg = arg; end
       attr_reader :deps, :arg
@@ -523,9 +523,9 @@ describe Wirer::Container do
 
     end
 
-    it "Dependency#type_check_argument should accept a factory-like object responding to new" do
+    it "Dependency#check_argument should accept a factory-like object responding to new" do
       dep = Wirer::Dependency.new_from_args(:class => Foo, :factory => true)
-      dep.type_check_argument(:foo, stub(:new => Object.new))
+      dep.check_argument(:foo, stub(:new => Object.new))
       assert true
     end
   end
