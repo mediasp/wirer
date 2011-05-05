@@ -167,4 +167,12 @@ describe Wirer::Factory::ClassDSL do
     assert_equal FooTest, BarTest.constructor_dependencies[:foo].required_class
     assert_equal BarTest, FooTest.constructor_dependencies[:bar].required_class
   end
+
+  it "should allow factory_dependency as sugar for constructor_dependency ..., :factory => true" do
+    Class.new do
+      wireable
+      expects(:constructor_dependency).with(:foo, 'foo', :some_arg => 'foo', :factory => true)
+      factory_dependency :foo, 'foo', :some_arg => 'foo'
+    end
+  end
 end

@@ -77,6 +77,17 @@ module Wirer
     end
     alias :dependency :constructor_dependency
 
+    # sugar for dependency :foo, ..., :factory => true.
+    #
+    # for factory dependencies, you'll be given a factory instance responding to 'new'
+    # from which you can construct your own instances of the dependency -- as opposed
+    # to normal dependencies where the container will give you a pre-constructed instance.
+    def factory_dependency(name, *args)
+      args.push({}) unless args.last.is_a?(Hash)
+      args.last[:factory] = true
+      constructor_dependency(name, *args)
+    end
+
     # will additionally define a attr_writer method of this name, unless :setter => false
     # is specified. this is private by default but made public if you specify :setter => :public.
     #
