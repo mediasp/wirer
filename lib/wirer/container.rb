@@ -250,7 +250,11 @@ module Wirer
 
     def construct_with_constructor_dependencies(factory, *args, &block_arg)
       deps = construct_dependencies(factory.constructor_dependencies)
-      factory.new_from_dependencies(deps, *args, &block_arg)
+      begin
+        factory.new_from_dependencies(deps, *args, &block_arg)
+      rescue => e
+        raise DependencyConstructionError.new("from factory: #{factory}", e)
+      end
     end
 
     def curry_factory_with_constructed_dependencies(factory)

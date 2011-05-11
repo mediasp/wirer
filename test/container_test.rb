@@ -523,6 +523,29 @@ describe Wirer::Container do
 
     end
 
+    describe "bad factory" do
+      it "should barf with the right error if the factory can't create the dependency" do
+
+        class FailFactory
+          extend Wirer::Factory::Interface
+
+          def self.new_from_dependencies(dependencies, *args)
+            raise "my toast is burnt"
+          end
+        end
+
+        container = Wirer::Container.new do |c|
+          c.add_factory(FailFactory, :method_name => 'failure')
+        end
+
+        exception = assert_raises Wirer::DependencyConstructionError do
+          container.failure
+        end
+        assert "my toast is burnt", exception.wrapped_error.message
+
+      end
+    end
+
     it "Dependency#check_argument should accept a factory-like object responding to new" do
       dep = Wirer::Dependency.new_from_args(:class => Foo, :factory => true)
       dep.check_argument(:foo, stub(:new => Object.new))
