@@ -253,7 +253,7 @@ module Wirer
       begin
         factory.new_from_dependencies(deps, *args, &block_arg)
       rescue => e
-        raise DependencyConstructionError.new("from factory: #{factory}", e)
+        raise DependencyConstructionError.new("from factory: #{factory.inspect}", e)
       end
     end
 
