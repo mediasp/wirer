@@ -253,7 +253,9 @@ module Wirer
       begin
         factory.new_from_dependencies(deps, *args, &block_arg)
       rescue => e
-        raise DependencyConstructionError.new("from factory: #{factory.inspect}", e)
+        wrapped = DependencyConstructionError.new("#{e.class}: #{e.message}, while trying to construct factory: #{factory.inspect}", e)
+        wrapped.set_backtrace(e.backtrace)
+        raise wrapped
       end
     end
 
