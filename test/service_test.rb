@@ -57,4 +57,24 @@ describe Wirer::Service do
     assert klass.new_skipping_type_checks(:foo => "right", :bar => [123, 456])
     assert klass.new_skipping_type_checks(:foo => "right", :bar => [123, 456], :baz => Object.new)
   end
+
+  it "should type-check factory dependencies passed to 'new' correctly" do
+    klass = Class.new(Wirer::Service) do
+      factory_dependency :foo_factory, String
+      factory_dependency :bar_factory, Integer, :multiple => true
+      factory_dependency :baz_factory, :optional => true
+    end
+
+    factory = stub('factory', :new => mock('whatevs'))
+
+    assert_raises(ArgumentError) {klass.new}
+    assert_raises(ArgumentError) {klass.new(:foo_factory => :wrong, :bar_factory => [factory])}
+    assert_raises(ArgumentError) {klass.new(:foo_factory => factory, :bar_factory => factory)}
+    assert_raises(ArgumentError) {klass.new(:foo_factory => factory, :bar_factory => [:wrong])}
+    assert_raises(ArgumentError) {klass.new(:foo_factory => factory, :bar_factory => [factory], :baz_factory => :wrong)}
+    assert_raises(ArgumentError) {klass.new(:foo_factory => factory, :bar_factory => [factory, :wrong])}
+
+    assert klass.new(:foo_factory => factory, :bar_factory => [factory, factory])
+    assert klass.new(:foo_factory => factory, :bar_factory => [factory, factory], :baz_factory => factory)
+  end
 end

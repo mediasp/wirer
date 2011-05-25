@@ -141,7 +141,11 @@ module Wirer
     def check_argument(argument_name, argument, strict_type_checks=false)
       if @multiple
         raise ArgumentError, "expected Array for argument #{argument_name}" unless argument.is_a?(Array)
-        raise ArgumentError, "expected at least one value for argument #{argument_name}" if argument.empty? && !@optional
+        if argument.empty?
+          if @optional then return else
+            raise ArgumentError, "expected at least one value for argument #{argument_name}"
+          end
+        end
         argument.each do |value|
           if @factory
             unless value.respond_to?(:new)
@@ -152,7 +156,11 @@ module Wirer
           end
         end
       else
-        raise ArgumentError, "expected argument #{argument_name}" if argument.nil? && !@optional
+        if argument.nil?
+          if @optional then return else
+            raise ArgumentError, "expected argument #{argument_name}"
+          end
+        end
         if @factory
           unless argument.respond_to?(:new)
             raise ArgumentError, "expected factory-like object which respond_to?(:new) for argument #{argument_name}"
