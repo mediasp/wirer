@@ -274,11 +274,19 @@ describe Wirer::Container do
         c.add_new_factory(:class => @foo_klass, :dependencies => {:bar => @bar_klass}, :method_name => :foo)
         c.add_new_factory(:class => @bar_klass, :dependencies => {:foo => @foo_klass}, :method_name => :bar)
       end
-      assert_raises(Wirer::CyclicDependencyError) do
+
+      begin
         @container.foo
+        assert false, 'should have thrown an error'
+      rescue Wirer::DependencyConstructionError => e
+        assert e.cause.is_a? Wirer::CyclicDependencyError
       end
-      assert_raises(Wirer::CyclicDependencyError) do
+
+      begin
         @container.bar
+        assert false, 'should have thrown an error'
+      rescue Wirer::DependencyConstructionError => e
+        assert e.cause.is_a? Wirer::CyclicDependencyError
       end
     end
   end
@@ -516,7 +524,7 @@ describe Wirer::Container do
           c.add_new_factory(:class => Foo, :features => [:foo]) {Object.new}
           c.add_new_factory(:method_name => :bar, :dependencies => {:foo => {:class => Foo, :factory => true}}) {|deps| shouldnt_get_here}
         end
-        assert_raises(Wirer::Error) do
+        assert_raises(Wirer::DependencyConstructionError) do
           container.bar
         end
       end

@@ -130,8 +130,12 @@ module Wirer
 
     def construct_factory_by_method_name(method_name, *args, &block_arg)
       factory = @factories_by_method_name[method_name]
-      construction_session do
-        construct_factory(factory, *args, &block_arg)
+      begin
+        construction_session do
+          construct_factory(factory, *args, &block_arg)
+        end
+      rescue
+        raise DependencyConstructionError.new("Unable to construct factory with name #{method_name}", $!)
       end
     end
 
@@ -252,9 +256,10 @@ module Wirer
       deps = construct_dependencies(factory.constructor_dependencies)
       begin
         factory.new_from_dependencies(deps, *args, &block_arg)
+      rescue Wirer::Error
+        raise
       rescue => e
-        wrapped = DependencyConstructionError.new("#{e.class}: #{e.message}, while trying to construct factory: #{factory.inspect}", e)
-        wrapped.set_backtrace(e.backtrace)
+        wrapped = DependencyConstructionError.new("Unable to construct factory: #{factory.inspect}", e)
         raise wrapped
       end
     end
