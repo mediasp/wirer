@@ -10,7 +10,7 @@ module Wirer
   #
   # Alternatively if don't want this, specify :singleton => false when adding it.
   class Container
-    attr_reader :factories
+    attr_reader :factories, :factories_by_method_name
 
     def initialize
       @singleton_factories_instances = {}
