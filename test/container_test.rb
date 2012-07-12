@@ -565,7 +565,7 @@ describe Wirer::Container do
     it "sets the setter dependency on the factory dependency" do
       foo = Class.new
 
-      bar = Class.new do
+      bar = Class.new(Wirer::Service) do
         wireable
         setter_dependency :foo, foo
       end
@@ -575,11 +575,11 @@ describe Wirer::Container do
       end
 
       container = Wirer::Container.new do |c|
-        c.add :baz, baz, :singleton => false
+        c.add :baz, baz
         c.add :bar, bar, :singleton => false
         c.add :foo, foo
       end
-      
+
       assert container.bar.send(:foo)
       dependency_with_factory = container.baz
       factory_dependency = dependency_with_factory.send(:bar)

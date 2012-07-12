@@ -12,7 +12,7 @@ module Wirer
   # the container will then give you a curried factory from which you can construct
   # your own instances, rather than supplying a single pre-constructed instance.
   #
-  # Note: at present only constructor dependencies can be curried in this way.
+  # Setter dependencies are curried in a very unoptimised way.
   class Factory::CurriedDependencies
     def initialize(factory, dependencies)
       @factory = factory
@@ -20,7 +20,13 @@ module Wirer
     end
 
     def new(*args, &block_arg)
-      @factory.new_from_dependencies(@dependencies, *args, &block_arg)
+      @factory.new_from_dependencies(@dependencies, *args, &block_arg).tap do |result|
+        setter_dependencies = factory.setter_dependencies(nil).dup || {}
+
+        setter_dependencies.each do |k,v|
+          result.send("#{k}=", v)
+        end
+      end
     end
 
     alias :call :new
