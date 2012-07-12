@@ -560,4 +560,30 @@ describe Wirer::Container do
       assert true
     end
   end
+
+  describe "can use setter dependencies when created from a factory dependency" do
+    it "sets the setter dependency on the factory dependency" do
+      foo = Class.new
+
+      bar = Class.new do
+        wireable
+        setter_dependency :foo, foo
+      end
+
+      baz = Class.new(Wirer::Service) do
+        factory_dependency :bar, bar
+      end
+
+      container = Wirer::Container.new do |c|
+        c.add :baz, baz, :singleton => false
+        c.add :bar, bar, :singleton => false
+        c.add :foo, foo
+      end
+      
+      assert container.bar.send(:foo)
+      dependency_with_factory = container.baz
+      factory_dependency = dependency_with_factory.send(:bar)
+      assert factory_dependency.new.send(:foo)
+    end
+  end
 end
