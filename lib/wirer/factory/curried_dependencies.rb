@@ -21,7 +21,7 @@ module Wirer
 
     def new(*args, &block_arg)
       @factory.new_from_dependencies(@dependencies, *args, &block_arg).tap do |result|
-        setter_dependencies = factory.setter_dependencies(nil).dup || {}
+        setter_dependencies = @factory.setter_dependencies(nil).dup || {}
 
         setter_dependencies.each do |k,v|
           result.send("#{k}=", v)
