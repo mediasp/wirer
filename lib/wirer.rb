@@ -9,6 +9,7 @@ require 'wirer/factory/class_mixins'
 require 'wirer/factory/curried_dependencies'
 require 'wirer/service'
 require 'wirer/dependency'
+require 'wirer/construction_session'
 require 'wirer/container'
 require 'wirer/errors'
 

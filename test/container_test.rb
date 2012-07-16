@@ -563,7 +563,11 @@ describe Wirer::Container do
 
   describe "can use setter dependencies when created from a factory dependency" do
     it "sets the setter dependency on the factory dependency" do
-      foo = Class.new
+      foo = Class.new do
+        def what
+          "hello"
+        end
+      end
 
       bar = Class.new(Wirer::Service) do
         wireable
@@ -583,7 +587,46 @@ describe Wirer::Container do
       assert container.bar.send(:foo)
       dependency_with_factory = container.baz
       factory_dependency = dependency_with_factory.send(:bar)
-      assert factory_dependency.new.send(:foo)
+      foo = factory_dependency.new.send(:foo)
+      assert foo
+      assert_equal "hello", foo.what
+    end
+
+    it "dependencies in added in a hash are created correctly" do
+      foo = Class.new do
+        def initialize(bar)
+          @bar = bar
+        end
+
+        attr_accessor :bar
+      end
+
+      bar = Class.new(Wirer::Service) do
+        wireable
+        setter_dependency :foo, foo
+
+        def what
+          "hello"
+        end
+      end
+
+      baz = Class.new(Wirer::Service) do
+        factory_dependency :bar, bar
+      end
+
+      container = Wirer::Container.new do |c|
+        c.add :baz, baz
+        c.add :bar, bar, :singleton => false
+        c.add :foo, foo, :singleton => true, :dependencies => {
+          :dep1 => bar
+        } do |deps|
+          foo.new(deps[:dep1])
+        end
+      end
+
+      assert_equal "hello", container.baz.send(:bar).new.send(:foo).bar.what
+      # assert_instance_of Class, container.baz.send(:bar).new.send(:foo).bar
+
     end
   end
 end

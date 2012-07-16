@@ -14,18 +14,17 @@ module Wirer
   #
   # Setter dependencies are curried in a very unoptimised way.
   class Factory::CurriedDependencies
-    def initialize(factory, dependencies)
+    def initialize(construction_session, factory, dependencies)
       @factory = factory
       @dependencies = dependencies
+      @construction_session = construction_session
     end
 
     def new(*args, &block_arg)
-      @factory.new_from_dependencies(@dependencies, *args, &block_arg).tap do |result|
-        setter_dependencies = @factory.setter_dependencies(nil).dup || {}
+      setter_dependencies = @factory.setter_dependencies(nil).dup || {}
 
-        setter_dependencies.each do |k,v|
-          result.send("#{k}=", v)
-        end
+      @construction_session.construction_session do
+        @construction_session.construct_factory(@factory, *args, &block_arg)
       end
     end
 
