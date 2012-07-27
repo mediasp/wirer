@@ -94,8 +94,8 @@ module Wirer
     # Supplies a wrapper around the factory with a set of pre-supplied dependencies.
     # The wrapper can then be used to construct instances.
     # See Factory::CurriedDependencies
-    def curry_with_dependencies(dependencies)
-      Factory::CurriedDependencies.new(self, dependencies)
+    def curry_with_dependencies(dependencies, construction_session)
+      Factory::CurriedDependencies.new(construction_session, self, dependencies)
     end
 
     def inject_dependency(instance, attr_name, dependency)

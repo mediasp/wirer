@@ -8,8 +8,8 @@ spec = Gem::Specification.new do |s|
   s.name   = "wirer"
   s.version = Wirer::VERSION
   s.platform = Gem::Platform::RUBY
-  s.authors = ['Matthew Willson']
-  s.email = ["matthew@playlouder.com"]
+  s.authors = ['Matthew Willson', 'Tom Chipchase']
+  s.email = ["matthew@playlouder.com", "tom.chipchase@gmail.com"]
   s.summary = "A lightweight dependency injection framework to help wire up objects in Ruby"
 
   s.add_development_dependency('rake')
