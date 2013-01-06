@@ -29,9 +29,9 @@ module Wirer
     end
   end
 
-  # A more convenient form of Wirer::Factory::ClassMixin, this additionally adds some
-  # private DSL methods which let you declare your constructor_dependencies,
-  # setter_dependencies and provides_features.
+  # A more convenient form of {Wirer::Factory::ClassMixin}, this additionally adds some
+  # private DSL methods which let you declare your {#constructor_dependencies},
+  # {#setter_dependencies} and {#provides_features}.
   #
   # The DSL works nicely with respect to subclassing, so you can add extra dependencies
   # or features in a subclass.
@@ -64,7 +64,9 @@ module Wirer
       deps_hash[arg_name] = Dependency.new_from_args(*dependency_args)
     end
 
-    # as a convenience, will additionally define an attr_reader for this dependency name
+    # Declares a constructor dependency, also aliased as {#dependency}.  See
+    # {Wirer::Dependency} for documentation on how to declare dependencies.
+    # As a convenience, will additionally define an attr_reader for this dependency name
     # unless you specify :getter => false. by default it will be private, but :getter => :public
     # will make it public.
     def constructor_dependency(name, *args)
@@ -88,7 +90,11 @@ module Wirer
       constructor_dependency(name, *args)
     end
 
-    # will additionally define a attr_writer method of this name, unless :setter => false
+    # Delcare a setter dependency.  Setter dependencies, as the name suggests,
+    # are given to an instance using a setter method, rather than passing it in
+    # to the constructor.
+    #
+    # It will additionally define a attr_writer method of this name, unless :setter => false
     # is specified. this is private by default but made public if you specify :setter => :public.
     #
     # and a corresponding public attr_reader too if :accessor => true if specified.

@@ -1,11 +1,14 @@
-# dependency :foo, Class, :features => [:feature, :feature], :optional => true
-# dependency :foo, Class, :features => [:feature, :feature], :multiple => true
-#
-# dependency :foo, Class, :optional => true
-# dependency :foo, :feature, :another_feature, :optional => true, :constructor => true
-
 module Wirer
 
+
+  # Models a dependency, and has class methods for interpreting dsl-like argument
+  # lists that declare dependencies.
+  #
+  # dependency :foo, Class, :features => [:feature, :feature], :optional => true
+  # dependency :foo, Class, :features => [:feature, :feature], :multiple => true
+  #
+  # dependency :foo, Class, :optional => true
+  # dependency :foo, :feature, :another_feature, :optional => true, :constructor => true
   class Dependency
     def self.new_from_args(*args)
       new(normalise_args(*args))
