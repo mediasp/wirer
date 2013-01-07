@@ -24,3 +24,14 @@ begin
   end
 rescue LoadError
 end
+
+begin
+  require 'yard'
+  OTHER_PATHS = ['README.md', 'README.rb']
+  YARD::Rake::YardocTask.new do |t|
+    t.files   = ['lib/**/*.rb', '-'] + OTHER_PATHS
+  end
+rescue NameError
+  $stderr.puts('yard not installed, no yard task defined')
+end
+

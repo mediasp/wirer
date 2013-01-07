@@ -1,8 +1,13 @@
 # Wirer
 
-Lightweight Ruby-style dependency injection to help wire up objects and modularise larger ruby codebases.
+Lightweight Ruby-style dependency injection to help wire up objects and
+modularise larger ruby codebases.
 
-# Quick Start
+Wirer allows you to combine objects in a container and then to wire up those objects
+by stating dependencies on other objects.  Objects can be identified by class and
+by 'features'.
+
+# A Basic Example
 
 ``` ruby
 require 'wirer'
@@ -50,4 +55,24 @@ users = ctr[Users]
 puts users.all
 ```
 
-See README.rb for a boatload of usage examples for declaring dependencies and adding objects to the container.
+See README.rb for a boatload of usage examples for declaring dependencies and
+adding objects to the container.
+
+# Adding objects to the container
+
+When you add an object to a container, you haven't necessarily constructed it
+yet, so what you are really doing is defining a factory that wirer can use to
+access an object when it is needed.
+
+Objects can be added to the container with:
+
+ - a set of features that allow you to arbitrarily tag an object
+ - the class of the object
+ - a convenient method name to access it from the container directly (i.e
+   `container.some_service`)
+ - an optional constructor block, used by the factory for constructing the object
+ - a set of dependencies that this object needs
+
+Which of these you supply depends on how you add them, and what you add, to the
+container.
+
