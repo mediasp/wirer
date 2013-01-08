@@ -10,6 +10,9 @@ by 'features'.
 Wirer doesn't force you to make your code wirer aware.  You can use it as much
 or as little as you want.
 
+This readme along with yard docs are also hosted at
+http://public.playlouder.com/doc/wirer.
+
 # A Basic Example
 
 ``` ruby
