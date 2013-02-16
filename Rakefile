@@ -36,3 +36,13 @@ rescue NameError
   $stderr.puts('yard not installed, no yard task defined')
 end
 
+load 'lib/wirer/version.rb'
+desc 'deploy the docs to public.playlouder.com'
+task :deploy_docs => :yard do
+  fname = "wirer-#{Wirer::VERSION}.tar.gz"
+  host = 'public.playlouder.com'
+  www_dir = "/var/www/public.playlouder.com/doc/wirer/"
+  `tar -czf #{fname} doc`
+  `scp #{fname} #{host}:/tmp/.`
+  `ssh #{host} tar xf /tmp/#{fname} -C #{www_dir}`
+end
