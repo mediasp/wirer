@@ -55,7 +55,7 @@ module Wirer
           # since this allows it to stay instance-sensitive. see #setter_dependencies.
           @extended_static_setter_dependencies ||= setter_dependencies
         else
-          raise Error, "No constructor_dependency or static setter_dependency #{arg_name.inspect} found to extend on the wrapped factory"
+          raise Error, "No constructor_dependency or static setter_dependency #{dep_name.inspect} found to extend on the wrapped factory"
         end
       end
 
