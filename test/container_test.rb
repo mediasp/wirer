@@ -625,8 +625,6 @@ describe Wirer::Container do
       end
 
       assert_equal "hello", container.baz.send(:bar).new.send(:foo).bar.what
-      # assert_instance_of Class, container.baz.send(:bar).new.send(:foo).bar
-
     end
   end
 end
