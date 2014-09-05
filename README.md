@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mediasp/wirer.svg?branch=master)](https://travis-ci.org/mediasp/wirer)
+[![Gem Version](https://badge.fury.io/rb/wirer.svg)](http://badge.fury.io/rb/wirer)
 # Wirer
 
 Lightweight Ruby-style dependency injection to help wire up objects and
