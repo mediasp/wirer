@@ -12,8 +12,6 @@ describe Wirer::Service do
       dependency :bar, Integer, :getter => :public
     end
     instance = klass.new(:foo => "abc", :bar => 123)
-    assert instance.instance_variables.include?("@foo")
-    assert instance.instance_variables.include?("@bar")
     assert_equal "abc", instance.foo
     assert_equal 123, instance.bar
   end
