@@ -5,9 +5,6 @@ require 'minitest/spec'
 require 'minitest/pride'
 require 'minitest/autorun'
 
-require 'mocha'
+require 'mocha/setup'
 
 require 'wirer'
-
-# todo:
-#  - default

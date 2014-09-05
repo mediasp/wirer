@@ -13,9 +13,8 @@ spec = Gem::Specification.new do |s|
   s.summary = "A lightweight dependency injection framework to help wire up objects in Ruby"
 
   s.add_development_dependency('rake')
-  s.add_development_dependency('minitest', '~> 2.1.0')
-  s.add_development_dependency('mocha', '~> 0.9.12')
-  s.add_development_dependency('rcov', '~> 0.9.9')
+  s.add_development_dependency('minitest', '~>2.1')
+  s.add_development_dependency('mocha', '~>0.11')
   s.add_development_dependency('yard')
   s.add_development_dependency('redcarpet')
 
