@@ -16,7 +16,6 @@ spec = Gem::Specification.new do |s|
   s.add_development_dependency('minitest', '>2.1')
   s.add_development_dependency('mocha', '>0.11')
   s.add_development_dependency('yard')
-  s.add_development_dependency('redcarpet')
 
   s.files = Dir.glob("{lib}/**/*") + ['README.rb']
 end
